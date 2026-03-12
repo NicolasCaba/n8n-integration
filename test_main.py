@@ -41,3 +41,38 @@ def test_get_user_not_found():
     response = client.get("/users/999")
     assert response.status_code == 404
     assert "not found" in response.json()["detail"]
+
+
+def test_create_user():
+    payload = {
+        "name": "Frank Castle",
+        "email": "frank@example.com",
+        "username": "frankc",
+        "phone": "555-0000",
+        "website": "frank.io",
+    }
+    response = client.post("/users", json=payload)
+    assert response.status_code == 201
+    created = response.json()
+    assert created["name"] == payload["name"]
+    assert created["email"] == payload["email"]
+    assert created["username"] == payload["username"]
+    assert "id" in created
+
+
+def test_create_user_appears_in_list():
+    payload = {
+        "name": "Grace Hopper",
+        "email": "grace@example.com",
+        "username": "graceh",
+    }
+    post_response = client.post("/users", json=payload)
+    assert post_response.status_code == 201
+    response = client.get("/users")
+    names = [u["name"] for u in response.json()]
+    assert "Grace Hopper" in names
+
+
+def test_create_user_missing_required_fields():
+    response = client.post("/users", json={"phone": "555-9999"})
+    assert response.status_code == 422
