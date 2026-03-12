@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
+from http import HTTPStatus
 
 app = FastAPI(title="Users Microservice", version="1.0.0")
 
@@ -37,3 +38,19 @@ def get_user(user_id: int):
     if user is None:
         raise HTTPException(status_code=404, detail=f"User with id {user_id} not found")
     return user
+
+
+class UserCreate(BaseModel):
+    name: str
+    email: str
+    username: str
+    phone: Optional[str] = None
+    website: Optional[str] = None
+
+
+@app.post("/users", response_model=User, status_code=HTTPStatus.CREATED)
+def create_user(user_data: UserCreate):
+    new_id = max(MOCK_USERS.keys(), default=0) + 1
+    new_user = User(id=new_id, **user_data.model_dump())
+    MOCK_USERS[new_id] = new_user
+    return new_user
